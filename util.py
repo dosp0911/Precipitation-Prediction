@@ -106,16 +106,17 @@ def load_model(path, model, map_location=None):
 
 
 
-def display_imgs(imgs, title='img'):
+def display_imgs(imgs, figsize, cols=2, title='img'):
   '''
       imgs : (N, H, W) or (N, C, H, W)
   '''
-  plt.figure(figsize=(15,2)) 
+  plt.figure(figsize=figsize) 
   if np.ndim(imgs) == 2:
     plt.imshow(imgs)
 
+  num = (len(imgs) // cols) + 1
   for i in range(len(imgs)):
-    plt.subplot(len(imgs)//2, 2, i+1)
+    plt.subplot(num, cols, i+1)
     plt.title(f'{i}th {title}')
     if np.ndim(imgs) == 3:
       plt.imshow(imgs[i], cmap='gray')
