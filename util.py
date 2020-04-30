@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-
+from multiprocessing import Pool
+from pathlib import Path
 
 
 def csv_file_load(f_p, index_col=False ):
@@ -26,7 +27,7 @@ def csv_file_load(f_p, index_col=False ):
 
 def move_files_to_class_folders(f_names, classes, root_f):
     root_path = pathlib.Path(str(root_f))
-    if not(root_path.exists()):
+    if not root_path.exists():
         raise FileExistsError(f'{root_f} does not exist')
         
     class_dirs = pd.unique(classes).astype('str')
@@ -205,3 +206,34 @@ class class2d_to_onehot(nn.Module):
 
 
 
+def get_file_names_in_folder(path, extension):
+    '''
+    :param path: directory path
+    extension = "exe", "jpg"..
+    :return: file name list
+    '''
+    p = Path(path)
+
+    if not p.is_dir():
+        raise ValueError(f'{path} does not exist or is not directory.')
+
+    return list(p.glob(f'*.{extension}'))
+
+def load_npy_files(paths):
+    '''
+    :param path: npy files n paths
+    :return: (n, npy dim)
+    '''
+    np_stacks = [np.load(str(p)) for p in tqdm(paths)]
+    return np_stacks
+
+
+
+
+if __name__ == '__main__':
+    l = get_file_names_in_folder('E:\\data\\rainfall\\train-002', "npy")
+    p = Pool(4)
+    i_1, i_2, i_3 = int(len(l) * 0.25), int(len(l) * 0.5), int(len(l) * 0.75)
+
+    result = p.map(load_npy_files, (l[:i_1], l[i_1:i_2], l[i_2:i_3], l[i_3:]))
+    npy_arr = np.concatenate((result[0], result[1], result[2], result[3]), axis=0).reshape(-1,1600, 15)
