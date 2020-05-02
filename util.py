@@ -228,12 +228,16 @@ def load_npy_files(paths):
     return np_stacks
 
 
-
-
 if __name__ == '__main__':
-    l = get_file_names_in_folder('E:\\data\\rainfall\\train-002', "npy")
-    p = Pool(4)
-    i_1, i_2, i_3 = int(len(l) * 0.25), int(len(l) * 0.5), int(len(l) * 0.75)
+    l = get_file_names_in_folder('C:\\Users\\DSKIM\\Google 드라이브\\DACON\\강수량측정\\train-002', "npy")
+    p_num = 4
+    p = Pool(p_num)
+    idx = np.linspace(0, len(l)/20, p_num + 1).astype(int)
 
-    result = p.map(load_npy_files, (l[:i_1], l[i_1:i_2], l[i_2:i_3], l[i_3:]))
-    npy_arr = np.concatenate((result[0], result[1], result[2], result[3]), axis=0).reshape(-1,1600, 15)
+    # i_1, i_2, i_3 = int(len(l) * 0.25), int(len(l) * 0.5), int(len(l) * 0.75)
+
+    part_of_files = [l[idx[i]:idx[i + 1]] for i in range(p_num)]
+
+    result = p.map(load_npy_files, part_of_files)
+    npy_arr = np.concatenate(result, axis=0).reshape(-1, 1600, 15)
+    print(np.shape(npy_arr))
