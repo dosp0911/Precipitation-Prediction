@@ -23,7 +23,7 @@ def equalize_hist(arr):
     :param arr: must be uint
     :return:
     """
-    return cv2.equalizeHist(arr)
+    return cv2.equalizeHist(arr.astype(np.uint8))
 
 
 def morphology_ex(arr):
