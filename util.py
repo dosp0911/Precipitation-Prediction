@@ -224,8 +224,12 @@ def load_npy_files(paths):
     :param path: npy files n paths
     :return: (n, npy dim)
     '''
-    np_stacks = [np.load(str(p)) for p in tqdm(paths)]
-    return np_stacks
+    if isinstance(paths, list):
+        np_stacks = [np.load(str(p)) for p in tqdm(paths)]
+        return np_stacks
+    elif isinstance(paths, str):
+        return np.load(paths)
+
 
 
 if __name__ == '__main__':

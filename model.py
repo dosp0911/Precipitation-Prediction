@@ -32,12 +32,37 @@ class Con2D(nn.Module):
         return self.sequential(x)
 
 
+class SamePadding2D(nn.Module):
+    def __init__(self):
+        super(SamePadding2D, self).__init__()
+
+    # x : [N,C,H,W]
+    def forward(self, x):
+        h = x.size()[-2]
+        w = x.size()[-1]
+        # in case both of height, width are odd
+        if (h % 2 != 0) and (w % 2 != 0):
+            return nn.ZeroPad2d((0, 1, 0, 1))(x)
+        # in case height is odd, width is even
+        elif (h % 2 != 0) and (w % 2 == 0):
+            return nn.ZeroPad2d((0, 0, 0, 1))(x)
+        # in case height is even, width is odd
+        elif (h % 2 == 0) and (w % 2 != 0):
+            return nn.ZeroPad2d((0, 1, 0, 0))(x)
+        # in case both of height, width are even
+        else:
+            return x
+
+
 def crop(features, size):
     h_old, w_old = features[0][0].size()
     h, w = size
+    if (h_old < h) or (w_old < w):
+        raise ValueError('being cropped arr size is smaller than to being added arr')
     x = math.ceil((h_old - h) / 2)
     y = math.ceil((w_old - w) / 2)
     return features[:, :, x:(x + h), y:(y + w)]
+
 
 class U_net(nn.Module):
     def __init__(self, in_channles, out_channels):
@@ -54,7 +79,7 @@ class U_net(nn.Module):
         self.exp_block_2 = Con2D(256, 128, 3, is_bn=False)
         self.exp_block_1 = Con2D(128, 64, 3, is_bn=False)
 
-        self.deconv_4 = nn.ConvTranspose2d(1024, 512, 2, stride=2)
+        self.deconv_4 = nn.ConvTranspose2d(1024, 512, 2, stride=2, output_padding=1)
         self.deconv_3 = nn.ConvTranspose2d(512, 256, 2, stride=2)
         self.deconv_2 = nn.ConvTranspose2d(256, 128, 2, stride=2)
         self.deconv_1 = nn.ConvTranspose2d(128, 64, 2, stride=2)
@@ -64,10 +89,13 @@ class U_net(nn.Module):
     def forward(self, x):
         con_block_1_out = self.con_block_1(x)
         x = nn.MaxPool2d(2, stride=2)(con_block_1_out)
+
         con_block_2_out = self.con_block_2(x)
         x = nn.MaxPool2d(2, stride=2)(con_block_2_out)
+
         con_block_3_out = self.con_block_3(x)
         x = nn.MaxPool2d(2, stride=2)(con_block_3_out)
+
         con_block_4_out = self.con_block_4(x)
         x = nn.MaxPool2d(2, stride=2)(con_block_4_out)
         x = self.con_block_5(x)
@@ -77,15 +105,15 @@ class U_net(nn.Module):
         x = self.exp_block_4(x)
 
         x = self.deconv_3(x)
-        x = torch.cat([crop(con_block_3_out,(x.size()[2], x.size()[3])), x], dim=1)
+        x = torch.cat([crop(con_block_3_out, (x.size()[2], x.size()[3])), x], dim=1)
         x = self.exp_block_3(x)
 
         x = self.deconv_2(x)
-        x = torch.cat([crop(con_block_2_out,(x.size()[2], x.size()[3])), x], dim=1)
+        x = torch.cat([crop(con_block_2_out, (x.size()[2], x.size()[3])), x], dim=1)
         x = self.exp_block_2(x)
 
         x = self.deconv_1(x)
-        x = torch.cat([crop(con_block_1_out,(x.size()[2], x.size()[3])), x], dim=1)
+        x = torch.cat([crop(con_block_1_out, (x.size()[2], x.size()[3])), x], dim=1)
         x = self.exp_block_1(x)
 
         x = self.final_layer(x)
@@ -93,3 +121,8 @@ class U_net(nn.Module):
         return x
 
 
+if __name__ == '__main__':
+    from torchsummary import summary
+    u_net = U_net(12, 1)
+    s = summary(u_net, (12, 40, 40), device='cpu')
+    print(s)

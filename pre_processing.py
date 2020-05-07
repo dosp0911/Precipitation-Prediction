@@ -20,11 +20,13 @@ def handle_outliers(arr):
 
 def equalize_hist(arr):
     """
-    :param arr: must be uint
-    :return:
+    :param arr: must be uint [C,H,W]
+    :return: arr[C,H,W]
     """
-    return cv2.equalizeHist(arr.astype(np.uint8))
+    for i, a in enumerate(arr):
+        arr[i] = cv2.equalizeHist(a.astype(np.uint8))
 
+    return arr
 
 def morphology_ex(arr):
     return cv2.morphologyEx(arr)
