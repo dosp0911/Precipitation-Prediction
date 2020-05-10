@@ -16,8 +16,8 @@ class GpmDataset(Dataset):
     def __getitem__(self, item):
         # gpm_data = (40, 40, 15)
         gpm_data = util.load_npy_files(str(self.file_list[item]))
-        precipitation = gpm_data[..., -1]
-        types = (gpm_data[..., 9] // 100).astype(int)
+        precipitation = torch.from_numpy(gpm_data[..., -1])
+        types = torch.from_numpy((gpm_data[..., 9] // 100).astype(int))
         # remove 9th: types, 12,13th: (DPR LONG/LATITUDE), 14th:precipitation(target data)
         gpm_data = np.delete(gpm_data, (9,12,13,14), axis=2)
         gpm_data = handle_outliers(gpm_data)
@@ -62,4 +62,4 @@ if __name__ == '__main__':
     val_len = len(val_dataloader)
 
     sample = next(iter(train_dataset))
-    print(sample)
+    print(sample[0].size(), sample[1].size(), sample[2].size() )

@@ -18,37 +18,37 @@ from pathlib import Path
 
 
 def csv_file_load(f_p, index_col=False ):
-    if f_p.exists():
-        return pd.read_csv(f_p, index_col=index_col)
-    else:
-        raise FileExistsError(f'{f_p} no exist!')
+  if f_p.exists():
+    return pd.read_csv(f_p, index_col=index_col)
+  else:
+    raise FileExistsError(f'{f_p} no exist!')
 
 
 
 def move_files_to_class_folders(f_names, classes, root_f):
-    root_path = pathlib.Path(str(root_f))
-    if not root_path.exists():
-        raise FileExistsError(f'{root_f} does not exist')
-        
-    class_dirs = pd.unique(classes).astype('str')
-    for d in class_dirs:
-        class_dir = root_path / d
-        if not class_dir.exists():
-            class_dir.mkdir()
-        
-    for file, c_ in tqdm(zip(f_names, classes.astype('str'))):
-        shutil.copy(str(root_path / file), str(root_path / c_))
-        
-    print('Done.')
+  root_path = pathlib.Path(str(root_f))
+  if not root_path.exists():
+    raise FileExistsError(f'{root_f} does not exist')
+
+  class_dirs = pd.unique(classes).astype('str')
+  for d in class_dirs:
+    class_dir = root_path / d
+    if not class_dir.exists():
+      class_dir.mkdir()
+
+  for file, c_ in tqdm(zip(f_names, classes.astype('str'))):
+    shutil.copy(str(root_path / file), str(root_path / c_))
+
+  print('Done.')
 
 
 
 def print_model_memory_size(model):
-    total_ = 0
-    for k, v in model.state_dict().items():
-        print(f'name:{k} size:{v.size()} dtype:{v.dtype}')
-        total_ += v.numel()
-    print(f'Model size : {total_*4} byte -> {total_*4/1024**2} MiB')
+  total_ = 0
+  for k, v in model.state_dict().items():
+    print(f'name:{k} size:{v.size()} dtype:{v.dtype}')
+    total_ += v.numel()
+  print(f'Model size : {total_*4} byte -> {total_*4/1024**2} MiB')
 
 
 
@@ -62,7 +62,7 @@ def get_pixel_value_frequencies(img_arr, dtype=int):
   arr = np.reshape(img_arr, -1)
   uvals = np.unique(arr).astype(dtype)
   uvals_dic = {}
-  
+
   for u in list(uvals):
     uvals_dic[u] = np.sum(arr==u)
   return uvals_dic
@@ -81,12 +81,12 @@ def get_weights_ratio_over_frequnecies(freq):
 
 def save_model(model, optim, save_path, epoch, loss):
   torch.save({
-        # 'model' : model,
-        'model_state_dict': model.state_dict(),
-        'epoch': epoch,
-        'loss' : loss,
-        'optim_state_dict': optim.state_dict()
-    }, save_path)
+    # 'model' : model,
+    'model_state_dict': model.state_dict(),
+    'epoch': epoch,
+    'loss' : loss,
+    'optim_state_dict': optim.state_dict()
+  }, save_path)
   print(f'model saved \n {save_path}')
 
 
@@ -111,7 +111,7 @@ def display_imgs(imgs, figsize, cols=2, title='img'):
   '''
       imgs : (N, H, W) or (N, C, H, W)
   '''
-  plt.figure(figsize=figsize) 
+  plt.figure(figsize=figsize)
   if np.ndim(imgs) == 2:
     plt.imshow(imgs)
 
@@ -134,7 +134,7 @@ def display_weights_of_model(model):
 
   #torch.nn.utils.parameters_to_vector
   for i,(n, p) in enumerate(model.named_parameters()):
-    ax = axes[i//5,i%5]
+    ax = axes[i//5, i%5]
     ax.set_title(n)
     sns.distplot(p.detach().numpy(), ax=ax)
 
@@ -160,16 +160,16 @@ def get_class_weights_by_pixel_frequencies(classId, EncodedPixels, img_size):
      img_size must be 1 dimension. (H*W)
   '''
   p_counts = np.zeros(len(classId.unique())+1)
-  
+
   # counts total pixels of training image dataset
   for c, e in zip(classId, EncodedPixels):
     rlc = np.asarray(e.split(' '))
     cls_pixels = sum(rlc[1::2].astype(int))
     p_counts[c] += cls_pixels
-    p_counts[0] += img_size - cls_pixels 
+    p_counts[0] += img_size - cls_pixels
 
   p_counts /= img_size
-  
+
   return get_weights_ratio_over_frequnecies(p_counts)
 
 
@@ -183,7 +183,7 @@ class class2d_to_onehot(nn.Module):
     '''
     super(class2d_to_onehot, self).__init__()
     self.classes = torch.tensor(classes).unique()
-    
+
   def forward(self, target):
     '''
       args: 
@@ -191,7 +191,7 @@ class class2d_to_onehot(nn.Module):
       return:
         (N,H,W)->(N,C,H,W)
         (H,W)->(C,H,W)
-    ''' 
+    '''
     ndims = len(target.size())
 
     assert ndims == 2 or ndims == 3
@@ -202,46 +202,49 @@ class class2d_to_onehot(nn.Module):
       cls_stacks = torch.stack([(target==c).type(torch.float32) for c in self.classes], dim=1)
 
     return cls_stacks
-  
+
 
 
 
 def get_file_names_in_folder(path, extension):
-    '''
-    :param path: directory path
-    extension = "exe", "jpg"..
-    :return: file name list
-    '''
-    p = Path(path)
+  '''
+  :param path: directory path
+  extension = "exe", "jpg"..
+  :return: file name list
+  '''
+  p = Path(path)
 
-    if not p.is_dir():
-        raise ValueError(f'{path} does not exist or is not directory.')
+  if not p.is_dir():
+    raise ValueError(f'{path} does not exist or is not directory.')
 
-    return list(p.glob(f'*.{extension}'))
+  return list(p.glob(f'*.{extension}'))
 
 def load_npy_files(paths):
-    '''
-    :param path: npy files n paths
-    :return: (n, npy dim)
-    '''
-    if isinstance(paths, list):
-        np_stacks = [np.load(str(p)) for p in tqdm(paths)]
-        return np_stacks
-    elif isinstance(paths, str):
-        return np.load(paths)
+  '''
+  :param path: npy files n paths
+  :return: (n, npy dim)
+  '''
+  if isinstance(paths, list):
+    np_stacks = [np.load(str(p)) for p in tqdm(paths)]
+    return np_stacks
+  elif isinstance(paths, str):
+    return np.load(paths)
 
 
 
 if __name__ == '__main__':
-    l = get_file_names_in_folder('C:\\Users\\DSKIM\\Google 드라이브\\DACON\\강수량측정\\train-002', "npy")
-    p_num = 4
-    p = Pool(p_num)
-    idx = np.linspace(0, len(l)/20, p_num + 1).astype(int)
+  l = get_file_names_in_folder('C:\\Users\\DSKIM\\Google 드라이브\\DACON\\강수량측정\\train-002', "npy")
+  p_num = 4
+  p = Pool(p_num)
+  idx = np.linspace(0, len(l)/20, p_num + 1).astype(int)
 
-    # i_1, i_2, i_3 = int(len(l) * 0.25), int(len(l) * 0.5), int(len(l) * 0.75)
+  # i_1, i_2, i_3 = int(len(l) * 0.25), int(len(l) * 0.5), int(len(l) * 0.75)
 
-    part_of_files = [l[idx[i]:idx[i + 1]] for i in range(p_num)]
+  part_of_files = [l[idx[i]:idx[i + 1]] for i in range(p_num)]
 
-    result = p.map(load_npy_files, part_of_files)
-    npy_arr = np.concatenate(result, axis=0).reshape(-1, 1600, 15)
-    print(np.shape(npy_arr))
+  result = p.map(load_npy_files, part_of_files)
+  npy_arr = np.concatenate(result, axis=0).reshape(-1, 1600, 15)
+  print(np.shape(npy_arr))
+
+def get_arr_over_pixel_class(arr, classes):
+  return arr.gather(1, classes.unsqueeze(1)).squeeze()
