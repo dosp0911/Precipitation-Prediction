@@ -16,6 +16,7 @@ class GpmDataset(Dataset):
     def __getitem__(self, item):
         # gpm_data = (40, 40, 15)
         gpm_data = util.load_npy_files(str(self.file_list[item]))
+        assert gpm_data.shape == (40, 40, 15)
         precipitation = torch.from_numpy(gpm_data[..., -1])
         types = torch.from_numpy((gpm_data[..., 9] // 100).astype(int))
         # remove 9th: types, 12,13th: (DPR LONG/LATITUDE), 14th:precipitation(target data)
