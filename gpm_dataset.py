@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 from pre_processing import handle_outliers, equalize_hist
 
+
 class GpmDataset(Dataset):
     def __init__(self, f_paths, t_f=None):
         super(GpmDataset, self).__init__()
