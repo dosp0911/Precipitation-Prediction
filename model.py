@@ -74,10 +74,10 @@ class U_net(nn.Module):
         self.con_block_4 = Con2D(256, 512, 3)
         self.con_block_5 = Con2D(512, 1024, 3)
 
-        self.exp_block_4 = Con2D(1024, 512, 3, is_bn=False)
-        self.exp_block_3 = Con2D(512, 256, 3, is_bn=False)
-        self.exp_block_2 = Con2D(256, 128, 3, is_bn=False)
-        self.exp_block_1 = Con2D(128, 64, 3, is_bn=False)
+        self.exp_block_4 = Con2D(1024, 512, 3)
+        self.exp_block_3 = Con2D(512, 256, 3)
+        self.exp_block_2 = Con2D(256, 128, 3)
+        self.exp_block_1 = Con2D(128, 64, 3)
 
         self.deconv_4 = nn.ConvTranspose2d(1024, 512, 2, stride=2, output_padding=1)
         self.deconv_3 = nn.ConvTranspose2d(512, 256, 2, stride=2)

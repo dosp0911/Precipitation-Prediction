@@ -23,7 +23,7 @@ class GpmDataset(Dataset):
         gpm_data = np.delete(gpm_data, (9,12,13,14), axis=2)
         gpm_data = handle_outliers(gpm_data)
         # opecv histogram equalization , morphologyEx
-        gpm_data[..., :9] = equalize_hist(gpm_data[..., :9]) # apply equalize histogram on only image channels
+        # gpm_data[..., :9] = equalize_hist(gpm_data[..., :9]) # apply equalize histogram on only image channels
         # pre-processing gpm data ( normalize, brightness, noisy, to_tensor.. so on)
         gpm_data = self.t_f(gpm_data)
 
