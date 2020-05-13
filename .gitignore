@@ -1,4 +1,4 @@
-.idea*
-venv
+.idea/
+venv/
 .ipyn*
-__pycache__
+__pycache__/
