@@ -33,6 +33,32 @@ class GpmDataset(Dataset):
     def __len__(self):
         return len(self.file_list)
 
+class TestGpmDataset(Dataset):
+    def __init__(self, f_paths, t_f=None):
+        super(TestGpmDataset, self).__init__()
+        # self.f_path = f_path
+        self.t_f = t_f
+        self.file_list = f_paths
+
+    def __getitem__(self, item):
+        # test gpm_data = (40, 40, 14)
+        gpm_data = util.load_npy_files(str(self.file_list[item]))
+        assert gpm_data.shape == (40, 40, 14)
+
+        types = torch.from_numpy((gpm_data[..., 9] // 100).astype(int))
+        # remove 9th: types, 12,13th: (DPR LONG/LATITUDE)
+        gpm_data = np.delete(gpm_data, (9,10,11,12,13), axis=2)
+        gpm_data = handle_outliers(gpm_data)
+        # opecv histogram equalization , morphologyEx
+        # gpm_data[..., :9] = equalize_hist(gpm_data[..., :9]) # apply equalize histogram on only image channels
+        # pre-processing gpm data ( normalize, brightness, noisy, to_tensor.. so on)
+        gpm_data = self.t_f(gpm_data)
+
+        return gpm_data, types
+
+    def __len__(self):
+        return len(self.file_list)
+
 
 if __name__ == '__main__':
     from sklearn.model_selection import train_test_split
