@@ -21,7 +21,7 @@ class GpmDataset(Dataset):
         precipitation = torch.from_numpy(gpm_data[..., -1])
         types = torch.from_numpy((gpm_data[..., 9] // 100).astype(int))
         # remove 9th: types, 12,13th: (DPR LONG/LATITUDE), 14th:precipitation(target data)
-        gpm_data = np.delete(gpm_data, (9,10, 11,12,13,14), axis=2)
+        gpm_data = np.delete(gpm_data, (9,10,11,12,13,14), axis=2)
         gpm_data = handle_outliers(gpm_data)
         # opecv histogram equalization , morphologyEx
         # gpm_data[..., :9] = equalize_hist(gpm_data[..., :9]) # apply equalize histogram on only image channels
