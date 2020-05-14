@@ -105,15 +105,15 @@ class U_net(nn.Module):
         # x = self.exp_block_4(x)
 
         x = self.deconv_3(x)
-        x = torch.cat([crop(con_block_3_out, (x.size()[2], x.size()[3])), x], dim=1)
+        x = torch.cat([con_block_3_out, (x.size()[2], x.size()[3]), x], dim=1)
         x = self.exp_block_3(x)
 
         x = self.deconv_2(x)
-        x = torch.cat([crop(con_block_2_out, (x.size()[2], x.size()[3])), x], dim=1)
+        x = torch.cat([con_block_2_out, (x.size()[2], x.size()[3]), x], dim=1)
         x = self.exp_block_2(x)
 
         x = self.deconv_1(x)
-        x = torch.cat([crop(con_block_1_out, (x.size()[2], x.size()[3])), x], dim=1)
+        x = torch.cat([con_block_1_out, (x.size()[2], x.size()[3]), x], dim=1)
         x = self.exp_block_1(x)
 
         x = self.final_layer(x)
