@@ -16,6 +16,7 @@ import numpy as np
 from multiprocessing import Pool
 from pathlib import Path
 
+from torchvision.models import resnet101
 
 def csv_file_load(f_p, index_col=False ):
   if f_p.exists():
@@ -41,6 +42,12 @@ def move_files_to_class_folders(f_names, classes, root_f):
 
   print('Done.')
 
+
+def get_backbone_model(model_name, pretrained=True):
+  if model_name.lower() == 'resnet101':
+    return resnet101(pretrained)
+  else:
+    raise ValueError(f'{model_name} not implemented.')
 
 
 def print_model_memory_size(model):
@@ -230,21 +237,9 @@ def load_npy_files(paths):
   elif isinstance(paths, str):
     return np.load(paths)
 
-
-
-if __name__ == '__main__':
-  l = get_file_names_in_folder('C:\\Users\\DSKIM\\Google 드라이브\\DACON\\강수량측정\\train-002', "npy")
-  p_num = 4
-  p = Pool(p_num)
-  idx = np.linspace(0, len(l)/20, p_num + 1).astype(int)
-
-  # i_1, i_2, i_3 = int(len(l) * 0.25), int(len(l) * 0.5), int(len(l) * 0.75)
-
-  part_of_files = [l[idx[i]:idx[i + 1]] for i in range(p_num)]
-
-  result = p.map(load_npy_files, part_of_files)
-  npy_arr = np.concatenate(result, axis=0).reshape(-1, 1600, 15)
-  print(np.shape(npy_arr))
-
 def get_arr_over_pixel_class(arr, classes):
   return arr.gather(1, classes.unsqueeze(1)).squeeze()
+
+if __name__ == '__main__':
+  b = get_backbone_model('resnet101')
+  print(b)
