@@ -32,10 +32,14 @@ class Con2D(nn.Module):
 
 
 class U_net(nn.Module):
-    def __init__(self, in_channles, out_channels, backbone='resnet101', pretrained=True):
+    def __init__(self, in_channels, out_channels, backbone='resnet34', pretrained=True, freeze=True):
         super(U_net, self).__init__()
 
-        self.con_block_1 = Con2D(in_channles, 64, 3)
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.backbone = backbone
+
+        self.con_block_1 = Con2D(in_channels, 64, 3)
         self.con_block_2 = Con2D(64, 128, 3)
         self.con_block_3 = Con2D(128, 256, 3)
         self.con_block_4 = Con2D(256, 512, 3)
@@ -50,37 +54,53 @@ class U_net(nn.Module):
 
         self.final_layer = nn.Conv2d(64, out_channels, 1)
 
-        if backbone is not None:
-            b = get_backbone_model(backbone, pretrained)
-            #apply_backbone(b) and freeze layers
         self.init_weights()
 
+    # apply_backbone(b) and freeze layers
+        if backbone is not None:
+            self.apply_backbone_to_model(backbone, get_backbone_model(backbone, pretrained), freeze)
+
+    def apply_backbone_to_model(self, backbone, b_model, freeze):
+        if backbone == 'resnet34':
+            # 1x1 conv to fit a channel size
+            b_model.requires_grad_(not freeze)
+            self.init_block = nn.Conv2d(self.in_channels, 64, 1)
+            self.con_block_1 = b_model.layer1
+            self.con_block_2 = b_model.layer2
+            self.con_block_3 = b_model.layer3
+            self.con_block_4 = b_model.layer4
+        elif backbone == 'resnet101':
+            raise ValueError(f'{backbone} not Implemented yet')
+        else:
+            raise ValueError(f'{backbone} not Implemented yet')
+
     def forward(self, x):
-        con_block_1_out = self.con_block_1(x)
-        x = nn.MaxPool2d(2, stride=2)(con_block_1_out)
+        if self.backbone is None:
+            con_block_1_out = self.con_block_1(x)
+            x = nn.MaxPool2d(2, stride=2)(con_block_1_out)
 
-        con_block_2_out = self.con_block_2(x)
-        x = nn.MaxPool2d(2, stride=2)(con_block_2_out)
+            con_block_2_out = self.con_block_2(x)
+            x = nn.MaxPool2d(2, stride=2)(con_block_2_out)
 
-        con_block_3_out = self.con_block_3(x)
-        x = nn.MaxPool2d(2, stride=2)(con_block_3_out)
-        x = self.con_block_4(x)
+            con_block_3_out = self.con_block_3(x)
+            x = nn.MaxPool2d(2, stride=2)(con_block_3_out)
+            x = self.con_block_4(x)
 
-        x = self.deconv_3(x)
-        x = torch.cat([con_block_3_out, (x.size()[2], x.size()[3]), x], dim=1)
-        x = self.exp_block_3(x)
+            x = self.decoder_path(x, con_block_1_out,
+                                  con_block_2_out, con_block_3_out)
+            return x
 
-        x = self.deconv_2(x)
-        x = torch.cat([con_block_2_out, (x.size()[2], x.size()[3]), x], dim=1)
-        x = self.exp_block_2(x)
-
-        x = self.deconv_1(x)
-        x = torch.cat([con_block_1_out, (x.size()[2], x.size()[3]), x], dim=1)
-        x = self.exp_block_1(x)
-
-        x = self.final_layer(x)
-
-        return x
+        elif self.backbone == 'resnet34':
+            x = self.init_block(x)
+            con_block_1_out = self.con_block_1(x)
+            con_block_2_out = self.con_block_2(x)
+            con_block_3_out = self.con_block_3(x)
+            x = self.con_block_4(x)
+            x = self.decoder_path(x, con_block_1_out,
+                                  con_block_2_out, con_block_3_out)
+            return x
+        else:
+            raise ValueError(f'{self.backbone} is not implemented.')
 
     def init_weights(self):
         for m in self.modules():
@@ -99,6 +119,23 @@ class U_net(nn.Module):
                 nn.init.normal_(m.weight, std=1e-3)
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
+
+    def decoder_path(self, x, con_block_1_out, con_block_2_out, con_block_3_out ):
+        x = self.deconv_3(x)
+        x = torch.cat([con_block_3_out, x], dim=1)
+        x = self.exp_block_3(x)
+
+        x = self.deconv_2(x)
+        x = torch.cat([con_block_2_out, x], dim=1)
+        x = self.exp_block_2(x)
+
+        x = self.deconv_1(x)
+        x = torch.cat([con_block_1_out, x], dim=1)
+        x = self.exp_block_1(x)
+
+        x = self.final_layer(x)
+        return x
+
 
 
 if __name__ == '__main__':

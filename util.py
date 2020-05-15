@@ -16,7 +16,7 @@ import numpy as np
 from multiprocessing import Pool
 from pathlib import Path
 
-from torchvision.models import resnet101
+import torchvision.models as models
 
 def csv_file_load(f_p, index_col=False ):
   if f_p.exists():
@@ -44,11 +44,22 @@ def move_files_to_class_folders(f_names, classes, root_f):
 
 
 def get_backbone_model(model_name, pretrained=True):
+  """
+    model lists = 'resnet101', 'vgg16'
+  """
   if model_name.lower() == 'resnet101':
-    return resnet101(pretrained)
+    return models.resnet101(pretrained)
+  if model_name.lower() == 'resnet34':
+    return models.resnet34(pretrained)
+  elif model_name.lower() == 'vgg16':
+    return models.vgg16(pretrained)
   else:
     raise ValueError(f'{model_name} not implemented.')
 
+
+def freeze_layers(layers, freeze=True):
+  for m in layers.parameters():
+    m.requires_grad = not freeze
 
 def print_model_memory_size(model):
   total_ = 0
@@ -56,7 +67,6 @@ def print_model_memory_size(model):
     print(f'name:{k} size:{v.size()} dtype:{v.dtype}')
     total_ += v.numel()
   print(f'Model size : {total_*4} byte -> {total_*4/1024**2} MiB')
-
 
 
 
@@ -75,15 +85,11 @@ def get_pixel_value_frequencies(img_arr, dtype=int):
   return uvals_dic
 
 
-
-
 def get_weights_ratio_over_frequnecies(freq):
   '''
     # [2,3,4,5] -> [1/2, 1/3, 1/4, 1/5]
   '''
   return list(map(lambda x: 1/x, freq))
-
-
 
 
 def save_model(model, optim, save_path, epoch, loss):
@@ -111,9 +117,6 @@ def load_model(path, model, map_location=None):
   return model
 
 
-
-
-
 def display_imgs(imgs, figsize, cols=2, title='img'):
   '''
       imgs : (N, H, W) or (N, C, H, W)
@@ -132,8 +135,6 @@ def display_imgs(imgs, figsize, cols=2, title='img'):
       plt.imshow(np.transpose(imgs[i], (2,3,0)))
 
 
-
-
 def display_weights_of_model(model):
   l_p = sum(1 for x in model.parameters())
   fg, axes = plt.subplots(l_p//5+1, 5, figsize=(15,15))
@@ -147,7 +148,6 @@ def display_weights_of_model(model):
 
 
 
-
 def display_trained_mask(output, title='trained'):
   """
     output : (N,C,H,W) display N trained masks 
@@ -158,8 +158,6 @@ def display_trained_mask(output, title='trained'):
     plt.subplot(len(output)//2, 2, i+1)
     plt.title(f'{i}th {title} mask')
     plt.imshow(output[i], cmap='gray')
-
-
 
 
 def get_class_weights_by_pixel_frequencies(classId, EncodedPixels, img_size):
@@ -178,7 +176,6 @@ def get_class_weights_by_pixel_frequencies(classId, EncodedPixels, img_size):
   p_counts /= img_size
 
   return get_weights_ratio_over_frequnecies(p_counts)
-
 
 
 class class2d_to_onehot(nn.Module):
@@ -209,8 +206,6 @@ class class2d_to_onehot(nn.Module):
       cls_stacks = torch.stack([(target==c).type(torch.float32) for c in self.classes], dim=1)
 
     return cls_stacks
-
-
 
 
 def get_file_names_in_folder(path, extension):
