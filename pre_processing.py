@@ -18,6 +18,16 @@ def handle_outliers(arr):
     return arr
 
 
+def is_outlier(arr):
+    """
+    check whether there is a outlier in array
+    """
+    if (np.isnan(arr).sum() > 0) or ((arr < 0).sum() > 0):
+        return True
+    else:
+        return False
+
+
 def equalize_hist(arr):
     """
     :param arr: must be uint [C,H,W]

@@ -93,12 +93,13 @@ class U_net(nn.Module):
         elif self.backbone == 'resnet34':
             x = self.init_block(x)
             con_block_1_out = self.con_block_1(x)
-            con_block_2_out = self.con_block_2(x)
-            con_block_3_out = self.con_block_3(x)
-            x = self.con_block_4(x)
+            con_block_2_out = self.con_block_2(con_block_1_out)
+            con_block_3_out = self.con_block_3(con_block_2_out)
+            x = self.con_block_4(con_block_3_out)
             x = self.decoder_path(x, con_block_1_out,
                                   con_block_2_out, con_block_3_out)
             return x
+
         else:
             raise ValueError(f'{self.backbone} is not implemented.')
 
