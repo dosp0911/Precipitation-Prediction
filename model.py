@@ -63,6 +63,7 @@ class U_net_pp(nn.Module):
         # self.conv0_4 = Con2D(filters[0]*4+filters[1], filters[0], filter_size)
 
         self.final = Con2D(filters[0], out_channels, 1, padding=0)
+        self.init_weights()
 
     def forward(self, x):
         x0_0 = self.conv0_0(x)
@@ -85,6 +86,24 @@ class U_net_pp(nn.Module):
         # x0_4 = self.conv0_4(torch.cat([x0_0, x0_1, x0_2, x0_3, self.up(x1_3)], dim=1))
 
         return self.final(x0_3)
+
+    def init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.ConvTranspose2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.normal_(m.weight, std=1e-3)
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
 
 
 if __name__ == '__main__':

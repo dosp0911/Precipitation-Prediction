@@ -4,7 +4,7 @@ import torch
 import util
 import numpy as np
 import cv2
-from pre_processing import handle_outliers, equalize_hist
+from pre_processing import handle_outliers, random_flip_both, random_rot90_both
 
 class GpmDataset(Dataset):
     def __init__(self, f_paths, t_f=None):
@@ -17,17 +17,19 @@ class GpmDataset(Dataset):
         # gpm_data = (40, 40, 15)
         gpm_data = util.load_npy_files(str(self.file_list[item]))
         assert gpm_data.shape == (40, 40, 15)
-        precipitation = torch.from_numpy(gpm_data[..., -1])
-        types = torch.from_numpy((gpm_data[..., 9] // 100).astype(int))
+        precipitation = gpm_data[..., -1]
+        types = (gpm_data[..., 9] // 100).astype(int)
         # remove 9th: types, 12,13th: (DPR LONG/LATITUDE), 14th:precipitation(target data)
         gpm_data = np.delete(gpm_data, (9,12,13,14), axis=2)
         gpm_data = handle_outliers(gpm_data)
-        # opecv histogram equalization , morphologyEx
-        # gpm_data[..., :9] = equalize_hist(gpm_data[..., :9]) # apply equalize histogram on only image channels
-        # pre-processing gpm data ( normalize, brightness, noisy, to_tensor.. so on)
+        gpm_data, precipitation, types =\
+            random_flip_both(gpm_data, precipitation, types)
+        gpm_data, precipitation, types =\
+            random_rot90_both(gpm_data, precipitation, types)
+
         gpm_data = self.t_f(gpm_data)
 
-        return gpm_data, precipitation, types
+        return gpm_data, torch.from_numpy(precipitation).float(), torch.from_numpy(types).int()
 
     def __len__(self):
         return len(self.file_list)
@@ -48,9 +50,7 @@ class TestGpmDataset(Dataset):
         # remove 9th: types, 12,13th: (DPR LONG/LATITUDE)
         gpm_data = np.delete(gpm_data, (9,12,13), axis=2)
         gpm_data = handle_outliers(gpm_data)
-        # opecv histogram equalization , morphologyEx
-        # gpm_data[..., :9] = equalize_hist(gpm_data[..., :9]) # apply equalize histogram on only image channels
-        # pre-processing gpm data ( normalize, brightness, noisy, to_tensor.. so on)
+
         gpm_data = self.t_f(gpm_data)
 
         return gpm_data, types
