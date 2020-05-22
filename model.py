@@ -8,7 +8,7 @@ import math
 
 
 class Con2D(nn.Module):
-    def __init__(self, in_c, out_c, k_size, padding=1, is_bn=True):
+    def __init__(self, in_c, out_c, k_size=3, padding=1, is_bn=True):
         super(Con2D, self).__init__()
 
         if is_bn:
@@ -32,37 +32,18 @@ class Con2D(nn.Module):
         return self.sequential(x)
 
 
+class BlockConv(nn.Module):
+    def __init__(self, in_c, out_c):
+        super(BlockConv, self).__init__()
+        modules = [Con2D(in_c, out_c) for c in range(4)]
+        self.block = nn.Sequential(*modules)
+
+
 class U_net_pp(nn.Module):
     def __init__(self, in_channles, out_channels):
         super(U_net_pp, self).__init__()
 
-        filters = [32, 64, 128, 256, 512]
-        filter_size = 3
-        self.up = nn.UpsamplingBilinear2d(scale_factor=2)
 
-        self.pool = nn.MaxPool2d(2, 2)
-
-        self.conv0_0 = Con2D(in_channles, filters[0], filter_size)
-        self.conv1_0 = Con2D(filters[0], filters[1], filter_size)
-        self.conv2_0 = Con2D(filters[1], filters[2], filter_size)
-        self.conv3_0 = Con2D(filters[2], filters[3], filter_size)
-        # self.conv4_0 = Con2D(filters[3], filters[4], filter_size)
-
-        self.conv0_1 = Con2D(filters[0]+filters[1], filters[0], filter_size)
-        self.conv1_1 = Con2D(filters[1]+filters[2], filters[1], filter_size)
-        self.conv2_1 = Con2D(filters[2]+filters[3], filters[2], filter_size)
-        # self.conv3_1 = Con2D(filters[3]+filters[4], filters[3], filter_size)
-
-        self.conv0_2 = Con2D(filters[0]*2+filters[1], filters[0], filter_size)
-        self.conv1_2 = Con2D(filters[1]*2+filters[2], filters[1], filter_size)
-        # self.conv2_2 = Con2D(filters[2]*2+filters[3], filters[2], filter_size)
-
-        self.conv0_3 = Con2D(filters[0]*3+filters[1], filters[0], filter_size)
-        # self.conv1_3 = Con2D(filters[1]*3+filters[2], filters[1], filter_size)
-
-        # self.conv0_4 = Con2D(filters[0]*4+filters[1], filters[0], filter_size)
-
-        self.final = Con2D(filters[0], out_channels, 1, padding=0)
         self.init_weights()
 
     def forward(self, x):
