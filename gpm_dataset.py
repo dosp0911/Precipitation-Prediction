@@ -34,6 +34,7 @@ class GpmDataset(Dataset):
     def __len__(self):
         return len(self.file_list)
 
+
 class TestGpmDataset(Dataset):
     def __init__(self, f_paths, t_f=None):
         super(TestGpmDataset, self).__init__()

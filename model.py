@@ -32,38 +32,6 @@ class Con2D(nn.Module):
         return self.sequential(x)
 
 
-class SamePadding2D(nn.Module):
-    def __init__(self):
-        super(SamePadding2D, self).__init__()
-
-    # x : [N,C,H,W]
-    def forward(self, x):
-        h = x.size()[-2]
-        w = x.size()[-1]
-        # in case both of height, width are odd
-        if (h % 2 != 0) and (w % 2 != 0):
-            return nn.ZeroPad2d((0, 1, 0, 1))(x)
-        # in case height is odd, width is even
-        elif (h % 2 != 0) and (w % 2 == 0):
-            return nn.ZeroPad2d((0, 0, 0, 1))(x)
-        # in case height is even, width is odd
-        elif (h % 2 == 0) and (w % 2 != 0):
-            return nn.ZeroPad2d((0, 1, 0, 0))(x)
-        # in case both of height, width are even
-        else:
-            return x
-
-
-def crop(features, size):
-    h_old, w_old = features[0][0].size()
-    h, w = size
-    if (h_old < h) or (w_old < w):
-        raise ValueError('being cropped arr size is smaller than to being added arr')
-    x = math.ceil((h_old - h) / 2)
-    y = math.ceil((w_old - w) / 2)
-    return features[:, :, x:(x + h), y:(y + w)]
-
-
 class U_net(nn.Module):
     def __init__(self, in_channles, out_channels):
         super(U_net, self).__init__()
@@ -101,19 +69,19 @@ class U_net(nn.Module):
         x = self.con_block_5(x)
 
         x = self.deconv_4(x)
-        x = torch.cat([crop(con_block_4_out, (x.size()[2], x.size()[3])), x], dim=1)
+        x = torch.cat([con_block_4_out, x], dim=1)
         x = self.exp_block_4(x)
 
         x = self.deconv_3(x)
-        x = torch.cat([crop(con_block_3_out, (x.size()[2], x.size()[3])), x], dim=1)
+        x = torch.cat([con_block_3_out, x], dim=1)
         x = self.exp_block_3(x)
 
         x = self.deconv_2(x)
-        x = torch.cat([crop(con_block_2_out, (x.size()[2], x.size()[3])), x], dim=1)
+        x = torch.cat([con_block_2_out, x], dim=1)
         x = self.exp_block_2(x)
 
         x = self.deconv_1(x)
-        x = torch.cat([crop(con_block_1_out, (x.size()[2], x.size()[3])), x], dim=1)
+        x = torch.cat([con_block_1_out, x], dim=1)
         x = self.exp_block_1(x)
 
         x = self.final_layer(x)
