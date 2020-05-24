@@ -28,22 +28,30 @@ def equalize_hist(arr):
 
     return arr
 
-def morphology_ex(arr):
-    return cv2.morphologyEx(arr)
+
+def random_flip_both(x, y, t, axes=(0, 1)):
+    """
+        input shape:[H,W,C]
+    """
+    a = (axes, axes[0], axes[1], 0)
+    r = a[np.random.randint(0, 4)]
+    if r != 0:
+        return np.flip(x, axis=r).copy(), np.flip(y, axis=r).copy(), np.flip(t, axis=r).copy()
+    else:
+        return x, y, t
+
+
+def random_rot90_both(x, y, t, axes=(0, 1)):
+    """
+        input shape:[H,W,C]
+    """
+    r = np.random.randint(0, 4)
+    return np.rot90(x, r, axes=axes).copy(), np.rot90(y, r, axes=axes).copy(), np.rot90(t, r, axes=axes).copy()
 
 
 if __name__ == '__main__':
-    f_list = util.get_file_names_in_folder('B:\\preciptation\\train-002', 'npy')
-    arr = np.load(f_list[0])
-    print(np.shape(arr[..., 0]))
-    plt.imshow(arr[..., 0])
-    # a = equalize_hist(arr[..., 0], )
-    # cv2.imshow('hist', a)
-    img = arr[..., 6]
-    e = cv2.equalizeHist(img.astype(np.uint8))
-    plt.subplot(131)
-    plt.imshow(img, cmap='gray')
-    plt.subplot(132)
-    plt.imshow(e, cmap='gray')
-    plt.subplot(133)
-    plt.imshow(arr[...,14], cmap='gray')
+    a = np.random.rand(3,12,40,40)
+    b = np.random.rand(3,40,40)
+    c = np.random.randint(0,3,(3,40,40))
+
+    random_rot90_both(a,b,c)
