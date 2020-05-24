@@ -39,7 +39,7 @@ class TestGpmDataset(Dataset):
         super(TestGpmDataset, self).__init__()
         # self.f_path = f_path
         self.t_f = t_f
-        self.file_list = f_paths
+        self.file_list = sorted(f_paths)
 
     def __getitem__(self, item):
         # test gpm_data = (40, 40, 14)
