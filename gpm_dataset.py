@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 from pre_processing import handle_outliers, random_flip_both, random_rot90_both
 
+
 class GpmDataset(Dataset):
     def __init__(self, f_paths, t_f=None):
         super(GpmDataset, self).__init__()
@@ -34,12 +35,13 @@ class GpmDataset(Dataset):
     def __len__(self):
         return len(self.file_list)
 
+
 class TestGpmDataset(Dataset):
     def __init__(self, f_paths, t_f=None):
         super(TestGpmDataset, self).__init__()
         # self.f_path = f_path
         self.t_f = t_f
-        self.file_list = f_paths
+        self.file_list = sorted(f_paths)
 
     def __getitem__(self, item):
         # test gpm_data = (40, 40, 14)
