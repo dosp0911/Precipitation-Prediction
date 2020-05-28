@@ -76,7 +76,7 @@ class BlockConv(nn.Module):
 class Branch(nn.Module):
     def __init__(self, in_c, out_ratios):
         super(Branch, self).__init__()
-        self.modules = []
+        self.m_list = nn.ModuleList()
         self.make_branch(in_c, out_ratios)
 
     def make_branch(self, in_c, out_ratios):
@@ -84,7 +84,7 @@ class Branch(nn.Module):
             out_ratios : dictionary for up and down , len(out_ratios) is number of out branches
                 i.e)  {'up': 2, 'up':1, 'down':2}
         """
-        m = self.modules
+        m = self.m_list
         for ratio in out_ratios:
             op, r = ratio.popitem()
             if op == 'up':
@@ -98,8 +98,8 @@ class Branch(nn.Module):
                 raise ValueError('Sampling operation is not correct.')
 
     def forward(self, x):
-        values = [m(x) for m in self.modules]
-        return values # values of numbers of out branches are in the list
+        values = [m(x) for m in self.m_list]
+        return values
 
 
 class HRNet(nn.Module):
@@ -197,3 +197,8 @@ class HRNet(nn.Module):
                 nn.init.normal_(m.weight, std=1e-3)
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
+
+
+if __name__ == '__main__':
+    hrnet = HRNet(12,4)
+    print(hrnet)
